@@ -43,29 +43,223 @@ export default function HomePage() {
     }
   }
 
-  /* ── Export to PDF (client-side) ──────────────────────────────────── */
+  /* ── Export to PDF using jsPDF (no html2canvas) ────────────────────
+   *  html2canvas cannot parse Tailwind CSS v4's lab()/oklch() color
+   *  functions.  Instead of rendering DOM → canvas → PDF, we use
+   *  jsPDF's text/shape API directly.  This is 100% reliable.
+   * ─────────────────────────────────────────────────────────────────── */
   async function handleExportPDF() {
-    if (!documentRef.current) return;
+    if (!caseStudy) return;
     setIsExporting(true);
 
     try {
-      // Dynamic import to avoid SSR breakage
-      const html2pdf = (await import("html2pdf.js")).default;
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
 
-      const filename = caseStudy
-        ? `CaseStudy_${caseStudy.companyProfile.companyName}_${Date.now()}.pdf`
-        : `CaseStudy_${Date.now()}.pdf`;
+      const PAGE_W = doc.internal.pageSize.getWidth();
+      const PAGE_H = doc.internal.pageSize.getHeight();
+      const MARGIN = 15;
+      const CONTENT_W = PAGE_W - MARGIN * 2;
+      let y = 0;
 
-      await html2pdf()
-        .set({
-          margin: [12, 12, 12, 12],
-          filename,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        })
-        .from(documentRef.current)
-        .save();
+      // ── Helper: auto-paginate ──────────────────────────────────────
+      function checkPage(needed = 12) {
+        if (y + needed > PAGE_H - MARGIN) {
+          doc.addPage();
+          y = MARGIN;
+        }
+      }
+
+      // ── Helper: wrapped text ───────────────────────────────────────
+      function addWrappedText(text, x, maxW, fontSize, color, fontStyle = "normal") {
+        doc.setFontSize(fontSize);
+        doc.setFont("helvetica", fontStyle);
+        doc.setTextColor(...color);
+        const lines = doc.splitTextToSize(text, maxW);
+        const lineH = fontSize * 0.45;
+        for (const line of lines) {
+          checkPage(lineH + 2);
+          doc.text(line, x, y);
+          y += lineH;
+        }
+        y += 2;
+      }
+
+      // ── Header bar (blue rectangle) ────────────────────────────────
+      doc.setFillColor(37, 99, 235); // blue-600
+      doc.rect(0, 0, PAGE_W, 38, "F");
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(191, 219, 254);
+      doc.text("DEVOPS TRANSFORMATION CASE STUDY", MARGIN, 14);
+
+      doc.setFontSize(18);
+      doc.setTextColor(255, 255, 255);
+      doc.text(caseStudy.companyProfile.companyName, MARGIN, 24);
+
+      const dateStr = new Date(caseStudy.metadata.generatedAt).toLocaleDateString(
+        "en-US",
+        { year: "numeric", month: "long", day: "numeric" }
+      );
+      doc.setFontSize(9);
+      doc.setTextColor(219, 234, 254);
+      doc.text(
+        `${caseStudy.companyProfile.industry} Sector  ·  Generated ${dateStr}`,
+        MARGIN,
+        31
+      );
+
+      y = 48;
+
+      // ── Section 1: Company Overview ────────────────────────────────
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(37, 99, 235);
+      doc.text("01 — COMPANY OVERVIEW", MARGIN, y);
+      y += 6;
+
+      addWrappedText(
+        `${caseStudy.companyProfile.industry} Industry`,
+        MARGIN, CONTENT_W, 13, [15, 23, 42], "bold"
+      );
+      y += 1;
+      addWrappedText(
+        caseStudy.companyProfile.description,
+        MARGIN, CONTENT_W, 10, [71, 85, 105]
+      );
+
+      // Divider
+      y += 3;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+      y += 8;
+
+      // ── Section 2: Architecture ────────────────────────────────────
+      checkPage(30);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(37, 99, 235);
+      doc.text("02 — CURRENT TECHNICAL ARCHITECTURE", MARGIN, y);
+      y += 6;
+
+      addWrappedText(
+        caseStudy.currentArchitecture.name,
+        MARGIN, CONTENT_W, 13, [15, 23, 42], "bold"
+      );
+      y += 1;
+      addWrappedText(
+        caseStudy.currentArchitecture.description,
+        MARGIN, CONTENT_W, 10, [71, 85, 105]
+      );
+
+      // Divider
+      y += 3;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+      y += 8;
+
+      // ── Section 3: Pain Points ─────────────────────────────────────
+      checkPage(20);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(37, 99, 235);
+      doc.text("03 — TRANSFORMATION CHALLENGES", MARGIN, y);
+      y += 8;
+
+      const BADGE_PDF = {
+        Easy: { bg: [209, 250, 229], text: [6, 95, 70] },
+        Medium: { bg: [254, 243, 199], text: [146, 64, 14] },
+        Hard: { bg: [255, 228, 230], text: [159, 18, 57] },
+      };
+
+      caseStudy.problems.forEach((problem, idx) => {
+        checkPage(30);
+
+        // Number circle
+        doc.setFillColor(219, 234, 254);
+        doc.circle(MARGIN + 4, y - 1.5, 4, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(29, 78, 216);
+        doc.text(String(idx + 1), MARGIN + 2.8, y);
+
+        // Badge
+        const badge = BADGE_PDF[problem.difficultyLevel] || BADGE_PDF.Easy;
+        const badgeText = problem.difficultyLevel;
+        const badgeX = MARGIN + 12;
+        doc.setFillColor(...badge.bg);
+        doc.roundedRect(badgeX, y - 4, 18, 5, 2, 2, "F");
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...badge.text);
+        doc.text(badgeText, badgeX + 2, y - 0.5);
+
+        y += 4;
+
+        // Description
+        addWrappedText(
+          problem.description,
+          MARGIN + 12, CONTENT_W - 12, 9.5, [51, 65, 85]
+        );
+        y += 4;
+      });
+
+      // Divider
+      y += 1;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+      y += 8;
+
+      // ── Section 4: Assignment ──────────────────────────────────────
+      checkPage(30);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(37, 99, 235);
+      doc.text("04 — YOUR ASSIGNMENT", MARGIN, y);
+      y += 6;
+
+      // Light blue background box
+      doc.setFillColor(239, 246, 255);
+      const assignLines = doc.splitTextToSize(caseStudy.challenge, CONTENT_W - 10);
+      const boxH = assignLines.length * 4.2 + 10;
+      checkPage(boxH + 4);
+      doc.roundedRect(MARGIN, y - 3, CONTENT_W, boxH, 2, 2, "F");
+
+      doc.setFontSize(9.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(30, 41, 59);
+      doc.text(assignLines, MARGIN + 5, y + 3);
+      y += boxH + 6;
+
+      // ── Footer ─────────────────────────────────────────────────────
+      checkPage(10);
+      doc.setDrawColor(226, 232, 240);
+      doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+      y += 5;
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Difficulty filter: ${caseStudy.metadata.difficultyFilter}`, MARGIN, y);
+      doc.text(
+        `Pain points: ${caseStudy.metadata.painPointCount}`,
+        PAGE_W - MARGIN,
+        y,
+        { align: "right" }
+      );
+
+      // Save with explicit Blob + anchor to guarantee .pdf filename
+      const safeName = caseStudy.companyProfile.companyName.replace(/[^a-zA-Z0-9]/g, "_");
+      const filename = `CaseStudy_${safeName}_${Date.now()}.pdf`;
+      const blob = doc.output("blob");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF export failed:", err);
       setError("PDF export failed. Please try again.");
