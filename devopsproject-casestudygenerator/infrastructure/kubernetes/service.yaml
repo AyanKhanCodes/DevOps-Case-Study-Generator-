@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────
+# Service: casestudy-generator-service
+# Exposes the application externally via LoadBalancer (or NodePort
+# fallback on Minikube / Docker Desktop Kubernetes).
+# ─────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: casestudy-generator-service
+  labels:
+    app: casestudy-generator
+    project: devops-case-study
+spec:
+  type: LoadBalancer
+  selector:
+    app: casestudy-generator
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80            # External-facing port
+      targetPort: 8080     # Container port (matches Deployment)
+      nodePort: 30080      # Static NodePort for Minikube access

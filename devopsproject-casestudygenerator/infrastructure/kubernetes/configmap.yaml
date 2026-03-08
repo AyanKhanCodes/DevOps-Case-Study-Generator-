@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────────────────
+# ConfigMap: casestudy-config
+# Stores non-sensitive environment configuration for the application.
+# ─────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: casestudy-config
+  labels:
+    app: casestudy-generator
+    project: devops-case-study
+data:
+  NODE_ENV: "production"
+  APP_PORT: "8080"
+  DATABASE_URL: "file:./prisma/dev.db"
