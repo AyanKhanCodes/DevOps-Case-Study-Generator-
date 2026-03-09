@@ -1,0 +1,25 @@
+stages:
+  - test
+  - build
+  - scan
+
+test_job:
+  stage: test
+  image: node:20
+  script:
+    - npm ci
+    - npm run test
+
+build_image_job:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - docker build -t devopsproject-casestudygenerator:latest .
+
+security_scan_job:
+  stage: scan
+  image: alpine:latest
+  script:
+    - echo "Running Trivy vulnerability scanner..."

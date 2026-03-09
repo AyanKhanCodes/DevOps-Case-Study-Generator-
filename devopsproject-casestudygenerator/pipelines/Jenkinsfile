@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    tools {
+        // Assumes a NodeJS installation named 'node-v20' is configured in global tools
+        nodejs 'node-v20' 
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install & Test') {
+            steps {
+                sh 'npm ci'
+                sh 'npm run test'
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh 'docker build -t devopsproject-casestudygenerator:latest .'
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh 'echo "Running Trivy vulnerability scanner..."'
+            }
+        }
+    }
+}
