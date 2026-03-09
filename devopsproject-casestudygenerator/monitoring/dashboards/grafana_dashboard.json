@@ -1,0 +1,57 @@
+{
+    "title": "DevOps Case Study Generator Health",
+    "uid": "devops-casestudy-dashboard",
+    "timezone": "browser",
+    "schemaVersion": 30,
+    "refresh": "5s",
+    "panels": [
+        {
+            "type": "stat",
+            "title": "Uptime",
+            "targets": [
+                {
+                    "expr": "time() - process_start_time_seconds{job=\"casestudy-generator\"}",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "reduceOptions": {
+                    "calc": "lastNotNull"
+                },
+                "valueMappings": []
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "CPU Usage (Container)",
+            "targets": [
+                {
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{container_name=\"casestudy-generator\"}[1m])) * 100",
+                    "legendFormat": "CPU %",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 18,
+                "h": 8
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "single"
+                },
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            }
+        }
+    ]
+}

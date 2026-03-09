@@ -1,0 +1,29 @@
+groups:
+  - name: casestudy_alerts
+    rules:
+      - alert: InstanceDown
+        expr: up{job="casestudy-generator"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "The Case Study Generator application has been down for more than 1 minute."
+
+      - alert: HighCpuUsage
+        expr: sum(rate(container_cpu_usage_seconds_total{container_name="casestudy-generator"}[2m])) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage for the Case Study Generator container is above 80% for more than 2 minutes."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate on {{ $labels.instance }}"
+          description: "The application is experiencing a high rate of HTTP 5xx errors (more than 5% in the last 5 minutes)."

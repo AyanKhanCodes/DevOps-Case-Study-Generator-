@@ -117,3 +117,16 @@ pip install pytest selenium
 ```bash
 python3 -m pytest tests/selenium/
 ```
+
+## Phase 8: Monitoring Setup
+
+* **Nagios Configuration (`monitoring/nagios/casestudy_app.cfg`)**: This file defines host and service checks. In a real environment, it would be copied or mounted into a Nagios Core server's `/usr/local/nagios/etc/objects/` directory to proactively check if port 8080 and the Docker daemon are responding.
+* **Prometheus Alerts (`monitoring/alerts/alert_rules.yml`)**: This file defines metric thresholds (CPU, Downtime, Errors). It would be mounted into a Prometheus container to trigger alerts to an Alertmanager when the conditions are met.
+* **Grafana Dashboard (`monitoring/dashboards/grafana_dashboard.json`)**: This JSON model represents our visual dashboard for health and uptime. It can be imported directly into the Grafana UI's "Import Dashboard" feature.
+
+### 1. Validate Monitoring Stack locally with Docker (Theoretical)
+```bash
+# Example command to run a theoretical monitoring docker-compose stack
+# (Assuming a docker-compose.monitoring.yml file exists that mounts these configs)
+docker-compose -f monitoring/docker-compose.monitoring.yml up -d
+```
