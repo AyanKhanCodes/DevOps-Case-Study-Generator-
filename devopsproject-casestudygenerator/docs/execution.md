@@ -130,3 +130,22 @@ python3 -m pytest tests/selenium/
 # (Assuming a docker-compose.monitoring.yml file exists that mounts these configs)
 docker-compose -f monitoring/docker-compose.monitoring.yml up -d
 ```
+
+## Phase 9: Demo Execution
+
+This phase defines the execution strategy for presenting your project.
+
+### 1. Prep the Application
+Before performing the demo outlined in `presentations/demoscript.md`, ensure the application is initialized and running with fresh seed data.
+```bash
+npm run build
+npx prisma db seed
+npm run start
+```
+
+### 2. Automated Run
+A WebP video recording of the entire demo script flow has been automatically generated and saved in the AI's artifact directory as validation that the UI components correctly process input.
+To manually perform a scripted UI test validation via Python's Selenium suite (which automates parts of this UI flow):
+```bash
+python3 -m pytest tests/selenium/test_ui.py
+```
