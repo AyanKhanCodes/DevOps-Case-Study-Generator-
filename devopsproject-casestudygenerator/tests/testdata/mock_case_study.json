@@ -1,0 +1,17 @@
+{
+    "industry": "Finance",
+    "company_size": "Enterprise",
+    "challenge": "Slow monolithic deployments, compliance bottlenecks, manual testing.",
+    "architecture": "Migration from on-prem monolith to AWS EKS with CI/CD automation.",
+    "painPoints": [
+        "Deployment takes 3 weeks.",
+        "Manual security auditing slows down release cycles.",
+        "High error rate directly impacting transactions."
+    ],
+    "solution": "Implemented GitOps with ArgoCD, DevSecOps pipelines with Trivy, and automated infrastructure using Terraform.",
+    "results": [
+        "Deployment time reduced from 3 weeks to 1 hour.",
+        "Zero-downtime deployments achieved.",
+        "Automated security scans blocked 40% more vulnerabilities pre-production."
+    ]
+}

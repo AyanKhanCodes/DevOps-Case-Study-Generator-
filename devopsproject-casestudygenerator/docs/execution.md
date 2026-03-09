@@ -92,3 +92,28 @@ terraform validate
 mkdir -p pipelines/.github/workflows
 ```
 *(Note: CI/CD pipelines trigger automatically upon push to the remote repository.)*
+
+## Phase 7: Testing & Quality Assurance
+
+### 1. Install JavaScript Testing Dependencies
+```bash
+npm install -D jest @testing-library/react @testing-library/jest-dom node-mocks-http
+```
+
+### 2. Run Jest Tests
+```bash
+npm run test
+npm run test:integration
+```
+
+### 3. Set Up Python Testing Environment
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install pytest selenium
+```
+
+### 4. Run Selenium Tests
+```bash
+python3 -m pytest tests/selenium/
+```
