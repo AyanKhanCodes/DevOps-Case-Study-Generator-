@@ -91,7 +91,7 @@ terraform validate
 ```bash
 mkdir -p pipelines/.github/workflows
 ```
-*(Note: CI/CD pipelines trigger automatically upon push to the remote repository.)*
+*(Note: CI/CD pipelines trigger automatically. GitHub Actions will trigger on push/pull requests to main. Jenkins is typically configured via polling or webhooks connected to the repository. GitLab CI triggers automatically parsing the `gitlab-ci.yml` pipeline file on commit.)*
 
 ## Phase 7: Testing & Quality Assurance
 
