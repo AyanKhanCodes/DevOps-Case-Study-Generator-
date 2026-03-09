@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     tools {
-        // Assumes a NodeJS installation named 'node-v20' is configured in global tools
         nodejs 'node-v20' 
     }
 
@@ -13,22 +12,27 @@ pipeline {
             }
         }
 
-        stage('Install & Test') {
+        stage('Test (Node)') {
             steps {
                 sh 'npm ci'
                 sh 'npm run test'
             }
         }
 
-        stage('Build Image') {
+        stage('UI Test (Python/Selenium)') {
             steps {
-                sh 'docker build -t devopsproject-casestudygenerator:latest .'
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install pytest selenium
+                python3 -m pytest tests/selenium/
+                '''
             }
         }
 
-        stage('Security Scan') {
+        stage('Docker Build') {
             steps {
-                sh 'echo "Running Trivy vulnerability scanner..."'
+                sh 'docker build -t devopsproject-casestudygenerator:latest .'
             }
         }
     }
