@@ -1,88 +1,31 @@
-# ─────────────────────────────────────────────────────────────────────
-# Deployment: casestudy-generator-deployment
-# Manages the Next.js application pods with rolling updates.
-# ─────────────────────────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: casestudy-generator-deployment
-  labels:
-    app: casestudy-generator
-    project: devops-case-study
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: casestudy-generator
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
   template:
     metadata:
       labels:
         app: casestudy-generator
     spec:
       containers:
-        - name: casestudy-app
-          image: devopsproject-casestudygenerator:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8080
-              protocol: TCP
-          # Pull all env vars from the ConfigMap
-          envFrom:
-            - configMapRef:
-                name: casestudy-config
-          # Liveness & readiness probes for production resilience
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 30
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
-          # Resource limits for predictable scheduling
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          # Mount the SQLite data volume for persistence
-          volumeMounts:
-            - name: sqlite-data
-              mountPath: /app/prisma/data
-      volumes:
+      - name: casestudy-generator
+        image: devopsproject-casestudygenerator:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: casestudy-config
+        volumeMounts:
         - name: sqlite-data
-          persistentVolumeClaim:
-            claimName: casestudy-sqlite-pvc
-
----
-# ─────────────────────────────────────────────────────────────────────
-# PersistentVolumeClaim: casestudy-sqlite-pvc
-# Ensures SQLite data survives pod restarts and rescheduling.
-# ─────────────────────────────────────────────────────────────────────
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: casestudy-sqlite-pvc
-  labels:
-    app: casestudy-generator
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+          mountPath: /app/prisma/data
+      volumes:
+      - name: sqlite-data
+        hostPath:
+          path: /data/casestudy-generator/sqlite 
+          type: DirectoryOrCreate
