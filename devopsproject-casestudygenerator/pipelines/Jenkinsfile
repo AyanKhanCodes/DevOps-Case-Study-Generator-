@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'node-v20' 
+    environment {
+        PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
     }
 
     stages {
@@ -14,25 +14,31 @@ pipeline {
 
         stage('Test (Node)') {
             steps {
-                sh 'npm ci'
-                sh 'npm run test'
+                dir('devopsproject-casestudygenerator') {
+                    sh 'npm ci'
+                    sh 'npm run test'
+                }
             }
         }
 
         stage('UI Test (Python/Selenium)') {
             steps {
-                sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install pytest selenium
-                python3 -m pytest tests/selenium/
-                '''
+                dir('devopsproject-casestudygenerator') {
+                    sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install pytest selenium
+                    python3 -m pytest tests/selenium/
+                    '''
+                }
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t devopsproject-casestudygenerator:latest .'
+                dir('devopsproject-casestudygenerator') {
+                    sh 'docker build -t devopsproject-casestudygenerator:latest -f infrastructure/docker/Dockerfile .'
+                }
             }
         }
     }
