@@ -1,19 +1,19 @@
 pipeline {
     agent any
 
-    
+    environment {
+        PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
+    }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout pulls the whole repo, so we leave this alone
                 checkout scm
             }
         }
 
         stage('Test (Node)') {
             steps {
-                // Step inside the project folder to find package.json
                 dir('devopsproject-casestudygenerator') {
                     sh 'npm ci'
                     sh 'npm run test'
@@ -23,7 +23,6 @@ pipeline {
 
         stage('UI Test (Python/Selenium)') {
             steps {
-                // Step inside the project folder to find the tests directory
                 dir('devopsproject-casestudygenerator') {
                     sh '''
                     python3 -m venv venv
@@ -37,7 +36,6 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                // Step inside the project folder to find the Dockerfile
                 dir('devopsproject-casestudygenerator') {
                     sh 'docker build -t devopsproject-casestudygenerator:latest .'
                 }
